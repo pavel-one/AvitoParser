@@ -123,18 +123,18 @@ async function getLinks(page, pageNumber = 1) {
 async function parsePage(link, page) {
     console.log('Парсим ', link)
     await page.goto(base_url + link)
-    await wait(2)
+    await wait(randomInteger(5, 15))
 
     await page.screenshot({
         path: 'tmp/' + link.replace(/\//g, '_') + '.jpg'
     })
 
-    await page.mouse.move(508, 392);
+    await page.mouse.move(randomInteger(300, 550), randomInteger(100, 400));
     await page.mouse.down();
-    await page.mouse.move(240, 354);
+    await page.mouse.move(randomInteger(100, 240), randomInteger(100, 400));
     await page.mouse.up();
     await page.click('.item-phone-number > .button');
-    await wait(2)
+    await wait(randomInteger(5, 15))
 
     const $ = cheerio.load(await page.content())
     const image = $('[data-marker="phone-popup/phone-image"]').attr('src')
@@ -143,7 +143,6 @@ async function parsePage(link, page) {
     let buffer = await Buffer.from(base64Data, 'base64')
     const {data: {text}} = await tesseract.recognize(buffer)
     const phone = text.replace(/\s|-/g, '')
-    console.log('PHONE NUMBER:', phone)
 
     let out = {
         title: '',
@@ -166,6 +165,11 @@ async function parsePage(link, page) {
     out.link = base_url + link
 
     return out;
+}
+
+function randomInteger(min, max) {
+    let rand = min + Math.random() * (max + 1 - min);
+    return Math.floor(rand);
 }
 
 async function wait(second = 5) {

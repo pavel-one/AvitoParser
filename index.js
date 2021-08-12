@@ -1,20 +1,60 @@
-const puppeteer = require('puppeteer');
+const express = require('express')
+const app = express()
+const fs = require('fs')
+const {request, response} = require("express");
+const port = 3000
+const child = require('child_process')
 
-(async () => {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto('https://google.com');
-    await page.screenshot({ path: 'google.png' });
+let parser = '';
 
-    const avitoPage = await browser.newPage();
-    await avitoPage.goto('https://www.avito.ru/');
-    console.log('Ждем 5 секунд');
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    console.log('Дождались');
-    await avitoPage.goto('https://www.avito.ru/moskva/gruzoviki_i_spetstehnika?radius=0');
+app.get('/', (request, response) => {
+    response.setHeader('Content-Type', 'application/json')
+    if (!fs.existsSync('output.json')) {
+        response.send({
+            'message': 'Результатов еще не сгенерирорвано, зайдите позже'
+        })
+    }
+    const json = fs.readFileSync('output.json')
 
-    await avitoPage.screenshot({ path: 'avito.png' });
+    response.send(JSON.parse(json))
+})
 
-    //TESSERACT library for phone
-    await browser.close();
-})();
+app.get('/run', (request, response) => {
+    if (typeof parser === 'object') {
+        response.send({
+            message: `Парсер запущен, id процесса ${parser.pid} ожидайте завершения, или завершите вручную`
+        })
+        return;
+    }
+
+    parser = child.fork('parser.js');
+
+    process.on('message', function (m) {
+        console.log('PARSER MESSAGE:', m)
+    })
+
+    response.send({
+        message: 'Процесс запущен'
+    })
+})
+app.get('/stop', (request, response) => {
+    if (typeof parser !== 'object') {
+        response.send({
+            message: `Парсер не запущен`
+        })
+        return '';
+    }
+
+    parser.kill();
+    parser = '';
+    response.send({
+        message: 'Парсер успешно остановлен'
+    })
+})
+
+app.listen(port, (err) => {
+    if (err) {
+        return console.log('Ошибка запуска сервера', err)
+    }
+    console.log(`Сервер запущен на ${port}`)
+})

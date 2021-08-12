@@ -101,7 +101,9 @@ async function preparePage(page) {
     ];
 
     await page.setCookie(...cookies)
-    await wait();
+    await page.mouse.move(randomInteger(100, 700), randomInteger(100, 400))
+    await page.mouse.move(randomInteger(100, 1000), randomInteger(100, 1000))
+    await wait(randomInteger(1, 15));
 }
 
 async function getLinks(page, pageNumber = 1) {

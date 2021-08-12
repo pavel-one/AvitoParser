@@ -14,13 +14,18 @@ const base_url = 'https://www.avito.ru';
 
 (async () => {
     const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox --window-size=1920,1080'],
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--proxy-server=194.28.209.74:8000"
+        ],
         defaultViewport: {
             width: 1920,
             height: 1080
         }
     });
     const page = await browser.newPage();
+    await page.authenticate({username: 'r423W1', password: 'hDzWcB'})
     await page.goto('https://google.com');
 
     const avitoPage = await browser.newPage();
@@ -120,6 +125,10 @@ async function parsePage(link, page) {
     await page.goto(base_url + link)
     await wait(2)
 
+    await page.screenshot({
+        path: 'tmp/' + link.replace(/\//g, '_') + '.jpg'
+    })
+
     await page.mouse.move(508, 392);
     await page.mouse.down();
     await page.mouse.move(240, 354);
@@ -155,10 +164,6 @@ async function parsePage(link, page) {
     out.address = $('.item-address__string').text()
     out.date = $('.title-info-metadata-item-redesign').text()
     out.link = base_url + link
-
-    await page.screenshot({
-        path: 'tmp/' + link.replace(/\//g, '_') + '.jpg'
-    })
 
     return out;
 }

@@ -19,6 +19,7 @@ const base_url = 'https://www.avito.ru';
             "--disable-setuid-sandbox",
             "--proxy-server=194.28.209.74:8000"
         ],
+        executablePath: '/usr/bin/chromium-browser',
         defaultViewport: {
             width: 1920,
             height: 1080

@@ -8,7 +8,7 @@ puppeteer.use(AdblockerPlugin({ blockTrackers: true }))
 const cheerio = require('cheerio');
 const {createWorker} = require('tesseract.js');
 const fs = require("fs");
-const {scrollPageToBottom} = require("puppeteer-autoscroll-down");
+// const {scrollPageToBottom} = require("puppeteer-autoscroll-down");
 const tesseract = createWorker();
 
 const avitoLink = 'https://www.avito.ru/moskva/gruzoviki_i_spetstehnika?radius=0';
@@ -29,7 +29,6 @@ const base_url = 'https://www.avito.ru';
             "--disable-setuid-sandbox",
             "--proxy-server=194.28.209.74:8000"
         ],
-        executablePath: '/usr/bin/chromium-browser',
         defaultViewport: {
             width: 1920,
             height: 1080
@@ -112,7 +111,7 @@ async function getLinks(page, pageNumber = 1) {
     await page.mouse.move(randomInteger(100, 240), randomInteger(100, 400));
     await page.mouse.up();
     await wait(10);
-    await scrollPageToBottom(page)
+    // await scrollPageToBottom(page)
     await page.screenshot({path: 'tmp/launch.jpg'})
 
     const $ = cheerio.load(await page.content());
@@ -139,7 +138,7 @@ async function parsePage(link, page) {
     await page.mouse.down();
     await page.mouse.move(randomInteger(100, 240), randomInteger(100, 400));
     await page.mouse.up();
-    await scrollPageToBottom(page)
+    // await scrollPageToBottom(page)
     await page.click('.item-phone-number > .button');
     await wait(randomInteger(5, 15))
 

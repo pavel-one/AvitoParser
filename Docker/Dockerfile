@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:lts
 
 # Install dependencies
 RUN apt-get update

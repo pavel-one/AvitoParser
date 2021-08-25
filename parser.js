@@ -27,7 +27,8 @@ const base_url = 'https://www.avito.ru';
         args: [
             "--no-sandbox",
             "--disable-setuid-sandbox",
-            "--proxy-server=194.28.209.74:8000"
+            "--proxy-server=194.28.209.74:8000",
+            '--disable-dev-shm-usage'
         ],
         defaultViewport: {
             width: 1920,

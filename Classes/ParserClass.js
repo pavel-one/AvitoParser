@@ -24,7 +24,7 @@ class ParserClass {
             'value': '4820fba7f6169e2326a4b6eef4b95fbf.1629815805'
         }
     ]
-    cookiesPath = __dirname + '/cookies.json'
+    cookiesPath = __dirname + '/../cookies.json'
     tmpPath = __dirname + '/../tmp'
 
     static build = async () => {
@@ -40,7 +40,7 @@ class ParserClass {
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
-                "--proxy-server=194.28.209.74:8000",
+                // "--proxy-server=194.28.209.74:8000",
                 '--disable-dev-shm-usage'
             ],
             defaultViewport: {
@@ -55,13 +55,14 @@ class ParserClass {
         await parser.video.init(parser.page, parser.tmpPath + '/video')
         await parser.video.start();
 
-        await parser.page.authenticate({
-            username: 'r423W1',
-            password: 'hDzWcB'
-        })
+        // await parser.page.authenticate({
+        //     username: 'r423W1',
+        //     password: 'hDzWcB'
+        // })
         await parser.page.goto('https://google.com')
-        await parser.page.goto(parser.base_url);
-        await parser.wait(10);
+        await parser.page.goto(parser.base_url)
+        // await parser.page.waitForNavigation()
+        // await parser.wait(10)
 
         if (fs.existsSync(parser.cookiesPath)) {
             console.log('COOKIE IS FILE')
@@ -72,28 +73,106 @@ class ParserClass {
             await parser.page.setCookie(...parser.cookies)
         }
 
-        await parser.page.reload()
         await parser.log('PREPARE')
         await parser.wait(3)
+
+        parser.pages = await parser.browser.pages()
+        console.log('PAGES COUNT: ', parser.pages.length)
 
         return parser
     };
 
     checkPage = async () => {
+        //Инициализация
         const selector = '[data-marker="catalog-serp"] > [data-marker="item"]'
-
         await this.page.goto(this.link)
         await this.page.waitForSelector(selector)
+
         const cursor = createCursor(this.page)
-        await this.wait(3)
-        await cursor.click(selector)
+        await this.scrollDown(this.page)
+        await cursor.toggleRandomMove(true)
         await cursor.move('[data-marker="page-title/count"]')
-        await this.log('TESTING PAGE')
+        await cursor.click('[data-marker="page-title/count"]')
+
+        let $ = cheerio.load(await this.page.content())
+        const self = this
+        const elements = $('[data-marker="catalog-serp"] > [data-marker=item]');
+        console.log('ELEMENTS LENGTH: ', elements.length);
+        await elements.each(async function () {
+            console.log('EACH')
+            let id = await $(this).data('item-id');
+            let selector = '[data-item-id=' + id + ']'
+            console.log('selector: ', selector)
+            await cursor.move(selector)
+            // await self.wait(1)
+            // await cursor.click(selector)
+            // await self.getAllPages()
+        });
+
+
+        // await this.wait(3)
+        // await cursor.click(selector)
+        // await cursor.move('[data-marker="page-title/count"]')
+        // await cursor.click()
+        // await cursor.click()
+        // await this.log('TESTING PAGE')
+        //
+        // // await this.video.stop();
+        //
+        // let allPages = await this.browser.pages()
+        // console.log("PAGES LENGTH: ", allPages.length)
+        //
+        // this.page = allPages[0]
+        // await this.page.bringToFront()
+        // await this.log('PAGE 1')
+        //
+        // this.page = allPages[1]
+        // await this.page.bringToFront()
+        // await this.log('PAGE 2')
+        //
+        // this.page = allPages[2]
+        // await this.page.bringToFront()
+        // await this.log('PAGE 3')
+        // // let page2 = allPages[0];
     };
+
+    getAllPages = async () => {
+        this.pages = await this.browser.pages();
+        console.log('PAGES COUNT: ', this.pages.length)
+    }
+
+    changePage = async (page) => {
+        this.page = page
+        console.log('CHANGE PAGE: ', page.title)
+    }
 
     process = async () => {
 
     };
+
+    randomInteger = (min, max) => {
+        let rand = min + Math.random() * (max + 1 - min);
+        return Math.floor(rand);
+    }
+
+    scrollDown = async (page) => {
+        await page.evaluate(async () => {
+            await new Promise((resolve, reject) => {
+                let totalHeight = 0;
+                const distance = 100;
+                const timer = setInterval(() => {
+                    const scrollHeight = document.body.scrollHeight;
+                    window.scrollBy(0, distance);
+                    totalHeight += distance;
+
+                    if (totalHeight >= scrollHeight) {
+                        clearInterval(timer);
+                        resolve();
+                    }
+                }, 500);
+            });
+        });
+    }
 
     log = async (message = '') => {
         console.log('PARSER: ', message)
@@ -102,7 +181,7 @@ class ParserClass {
         })
 
         const cookies = await this.page.cookies();
-        await fs.writeFileSync('./cookies.json', JSON.stringify(cookies, null, 2));
+        await fs.writeFileSync(this.cookiesPath, JSON.stringify(cookies, null, 2));
     };
 
     wait = async (second = 15) => {

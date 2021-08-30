@@ -2,10 +2,10 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 puppeteer.use(StealthPlugin())
 
-const adblock = require('puppeteer-extra-plugin-adblocker')
-puppeteer.use(adblock({
-    blockTrackers: true
-}))
+// const adblock = require('puppeteer-extra-plugin-adblocker')
+// puppeteer.use(adblock({
+//     blockTrackers: true
+// }))
 
 const PuppeteerVideoRecorder = require('puppeteer-video-recorder');
 
@@ -13,6 +13,7 @@ const cheerio = require('cheerio');
 const {createWorker} = require('tesseract.js');
 const {createCursor} = require('ghost-cursor')
 const fs = require("fs");
+const __ = require('lodash');
 
 
 class ParserClass {
@@ -24,11 +25,14 @@ class ParserClass {
             'value': '4820fba7f6169e2326a4b6eef4b95fbf.1629815805'
         }
     ]
-    cookiesPath = __dirname + '/../cookies.json'
     tmpPath = __dirname + '/../tmp'
+    rootDir = __dirname + '/../'
+    cookiesPath = this.rootDir + 'cookies.json'
 
     static build = async () => {
         const parser = new ParserClass()
+
+        parser.result = []
 
         parser.tesseract = await createWorker()
         await parser.tesseract.load();
@@ -50,10 +54,6 @@ class ParserClass {
         })
 
         parser.page = await parser.browser.newPage()
-
-        parser.video = new PuppeteerVideoRecorder();
-        await parser.video.init(parser.page, parser.tmpPath + '/video')
-        await parser.video.start();
 
         // await parser.page.authenticate({
         //     username: 'r423W1',
@@ -82,34 +82,6 @@ class ParserClass {
         return parser
     };
 
-    checkPage = async () => {
-
-        // await this.wait(3)
-        // await cursor.click(selector)
-        // await cursor.move('[data-marker="page-title/count"]')
-        // await cursor.click()
-        // await cursor.click()
-        // await this.log('TESTING PAGE')
-        //
-        // // await this.video.stop();
-        //
-        // let allPages = await this.browser.pages()
-        // console.log("PAGES LENGTH: ", allPages.length)
-        //
-        // this.page = allPages[0]
-        // await this.page.bringToFront()
-        // await this.log('PAGE 1')
-        //
-        // this.page = allPages[1]
-        // await this.page.bringToFront()
-        // await this.log('PAGE 2')
-        //
-        // this.page = allPages[2]
-        // await this.page.bringToFront()
-        // await this.log('PAGE 3')
-        // // let page2 = allPages[0];
-    };
-
     getAllPages = async () => {
         this.pages = await this.browser.pages();
         console.log('PAGES COUNT: ', this.pages.length)
@@ -117,7 +89,8 @@ class ParserClass {
 
     changePage = async (page) => {
         this.page = page
-        await this.log('CHANGE PAGE: ', page.title)
+        await this.page.bringToFront()
+        await this.log('CHANGE PAGE: ' + await this.page.title())
     }
 
     process = async () => {
@@ -132,30 +105,115 @@ class ParserClass {
         await this.page.goto(this.link)
         await this.page.waitForSelector(selector)
 
+        //Работа с курсором
         const cursor = createCursor(this.page)
         await this.scrollDown(this.page)
-        await cursor.toggleRandomMove(true)
+        // await cursor.toggleRandomMove(true)
         await cursor.move('[data-marker="page-title/count"]')
         await cursor.click('[data-marker="page-title/count"]')
 
+        //Ищем селекторы айтемов
         let $ = cheerio.load(await this.page.content())
         const elements = $('[data-marker="catalog-serp"] > [data-marker=item]');
 
         let selectors = []
+
         await elements.each(async function () {
             let id = await $(this).attr('id');
             let selector = '#' + id
             selectors.push(selector)
         })
 
+        selectors = __.shuffle(selectors) //сортируем селекторы, чтобы кликать не по порядку
+
+        //Кликаем по селекторам
         for (const selector of selectors) {
             try {
-                await cursor.move(selector)
+                await cursor.click(selector)
+                await this._parsePage()
+                await this._writeToFile()
             } catch (e) {
-                console.log('MOVE ERROR', e.message)
+                console.log('!! PARSE ERROR !!', e.message)
             }
             console.log('MOVE SELECTOR:', selector)
         }
+    }
+
+    _parsePage = async () => {
+        const buttonSelector = '.item-phone-number > .button'
+        const gallerySelector = '.gallery-list-wrapper'
+
+        await this.wait(this.randomInteger(5, 20))
+        await this.getAllPages()
+
+        if (this.pages.length < 3) {
+            throw new Error('Промазали по элементу, пропускаем')
+        }
+
+        try {
+            await this.changePage(this.pages[2])
+            await this.log('[PAGE] ' + await this.page.title())
+
+            const cursor = createCursor(this.page)
+            await cursor.move(gallerySelector)
+            await this.scrollDown(this.page)
+            await this.wait(this.randomInteger(1, 10))
+            await cursor.click(buttonSelector)
+            await this.log('[PAGE] END ' + await this.page.title())
+
+            await this._saveContentPage()
+        } catch (e) {
+            console.log('!! ERROR PARSER PAGE !!', e.message)
+        }
+
+        await this.page.close()
+        await this.getAllPages()
+
+        await this.changePage(this.pages[1])
+
+
+    }
+
+    _saveContentPage = async () => {
+        const $ = cheerio.load(await this.page.content())
+        const $image = $('[data-marker="phone-popup/phone-image"]')
+
+        if (!$image.length) {
+            throw new Error('Не удалось получить телефон')
+        }
+
+        const image = $image.attr('src')
+        const base64Data = image.replace(/^data:image\/png;base64,/, "");
+
+        let buffer = await Buffer.from(base64Data, 'base64')
+        const {data: {text}} = await this.tesseract.recognize(buffer)
+        const phone = text.replace(/\s|-/g, '')
+
+        let out = {
+            title: '',
+            price: 0,
+            phone: '',
+            saler: '',
+            salerName: '',
+            address: '',
+            date: '',
+            link: ''
+        };
+
+        out.title = $('.title-info-title-text').text()
+        out.price = $('.js-item-price').attr('content')
+        out.phone = phone
+        out.saler = $('[data-marker="seller-info/name"]').find('a').first().text()
+        out.salerName = $('.seller-info-value').text()
+        out.address = $('.item-address__string').text()
+        out.date = $('.title-info-metadata-item-redesign').text()
+        out.link = await this.page.url()
+
+        this.result.push(out);
+    }
+
+    _writeToFile = async () => {
+        await fs.writeFileSync("output.json", JSON.stringify(this.result), 'utf8');
     }
 
     randomInteger = (min, max) => {
@@ -183,7 +241,8 @@ class ParserClass {
     }
 
     log = async (message = '') => {
-        console.log('PARSER: ', message)
+        message = await __(message).truncate(8)
+        console.log('[LOG]: ', message)
         await this.page.screenshot({
             path: this.tmpPath + `/${message}.png`
         })
@@ -198,7 +257,6 @@ class ParserClass {
     };
 
     close = async () => {
-        await this.video.stop()
         await this.browser.close()
         await this.tesseract.terminate()
     };

@@ -83,32 +83,6 @@ class ParserClass {
     };
 
     checkPage = async () => {
-        //Инициализация
-        const selector = '[data-marker="catalog-serp"] > [data-marker="item"]'
-        await this.page.goto(this.link)
-        await this.page.waitForSelector(selector)
-
-        const cursor = createCursor(this.page)
-        await this.scrollDown(this.page)
-        await cursor.toggleRandomMove(true)
-        await cursor.move('[data-marker="page-title/count"]')
-        await cursor.click('[data-marker="page-title/count"]')
-
-        let $ = cheerio.load(await this.page.content())
-        const self = this
-        const elements = $('[data-marker="catalog-serp"] > [data-marker=item]');
-        console.log('ELEMENTS LENGTH: ', elements.length);
-        await elements.each(async function () {
-            console.log('EACH')
-            let id = await $(this).data('item-id');
-            let selector = '[data-item-id=' + id + ']'
-            console.log('selector: ', selector)
-            await cursor.move(selector)
-            // await self.wait(1)
-            // await cursor.click(selector)
-            // await self.getAllPages()
-        });
-
 
         // await this.wait(3)
         // await cursor.click(selector)
@@ -143,12 +117,46 @@ class ParserClass {
 
     changePage = async (page) => {
         this.page = page
-        console.log('CHANGE PAGE: ', page.title)
+        await this.log('CHANGE PAGE: ', page.title)
     }
 
     process = async () => {
-
+        await this._preparePage()
     };
+
+    _preparePage = async () => {
+        await this.log('PREPARE PAGE')
+
+        //Инициализация
+        const selector = '[data-marker="catalog-serp"] > [data-marker="item"]'
+        await this.page.goto(this.link)
+        await this.page.waitForSelector(selector)
+
+        const cursor = createCursor(this.page)
+        await this.scrollDown(this.page)
+        await cursor.toggleRandomMove(true)
+        await cursor.move('[data-marker="page-title/count"]')
+        await cursor.click('[data-marker="page-title/count"]')
+
+        let $ = cheerio.load(await this.page.content())
+        const elements = $('[data-marker="catalog-serp"] > [data-marker=item]');
+
+        let selectors = []
+        await elements.each(async function () {
+            let id = await $(this).attr('id');
+            let selector = '#' + id
+            selectors.push(selector)
+        })
+
+        for (const selector of selectors) {
+            try {
+                await cursor.move(selector)
+            } catch (e) {
+                console.log('MOVE ERROR', e.message)
+            }
+            console.log('MOVE SELECTOR:', selector)
+        }
+    }
 
     randomInteger = (min, max) => {
         let rand = min + Math.random() * (max + 1 - min);

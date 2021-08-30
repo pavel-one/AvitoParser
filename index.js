@@ -4,6 +4,9 @@ const fs = require('fs')
 const {request, response} = require("express");
 const port = 3000
 const child = require('child_process')
+const path = require("path");
+
+app.set('view engine', 'pug');
 
 let parser = '';
 
@@ -18,6 +21,34 @@ app.get('/', (request, response) => {
 
     response.send(JSON.parse(json))
 })
+
+app.use('/static', express.static(path.join(__dirname, 'tmp')))
+app.get('/process', (req, res) => {
+    let images = getImagesFromDir(path.join(__dirname, 'tmp'));
+    res.render('index', {title: 'Процесс парсинга', images: images})
+});
+
+function getImagesFromDir(dirPath) {
+    let allImages = [];
+
+    let files = fs.readdirSync(dirPath);
+
+    let file;
+    for (file of files) {
+        let fileLocation = path.join(dirPath, file);
+        const stat = fs.statSync(fileLocation);
+        if (stat && stat.isDirectory()) {
+            getImagesFromDir(fileLocation);
+        } else if (stat && stat.isFile() && ['.jpg', '.png'].indexOf(path.extname(fileLocation)) !== -1) {
+            allImages.push({
+                url: 'static/' + file,
+                name: file
+            });
+        }
+    }
+
+    return allImages;
+}
 
 app.get('/run', (request, response) => {
     if (typeof parser === 'object') {

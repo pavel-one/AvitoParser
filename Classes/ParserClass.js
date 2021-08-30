@@ -2,18 +2,12 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 puppeteer.use(StealthPlugin())
 
-// const adblock = require('puppeteer-extra-plugin-adblocker')
-// puppeteer.use(adblock({
-//     blockTrackers: true
-// }))
-
-const PuppeteerVideoRecorder = require('puppeteer-video-recorder');
-
 const cheerio = require('cheerio');
 const {createWorker} = require('tesseract.js');
 const {createCursor} = require('ghost-cursor')
 const fs = require("fs");
 const __ = require('lodash');
+const path = require("path");
 
 
 class ParserClass {
@@ -31,6 +25,22 @@ class ParserClass {
 
     static build = async () => {
         const parser = new ParserClass()
+
+        fs.readdir(parser.tmpPath, (err, files) => {
+            if (err) throw err;
+
+            for (const file of files) {
+                if (file === '.gitignore') {
+                    continue;
+                }
+
+                console.log('Remove File: ' + file)
+
+                fs.unlink(path.join(parser.tmpPath, file), err => {
+                    if (err) throw err;
+                });
+            }
+        });
 
         parser.result = []
 

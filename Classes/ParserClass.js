@@ -166,6 +166,7 @@ class ParserClass {
         }
 
         this.pageNumber++
+        this.iterate = 0
         await this._preparePage()
     }
 

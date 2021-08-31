@@ -3,7 +3,7 @@
     const pages = 50;
 
     for (let page = 1; page < pages; page++) {
-        const parser = await ParserClass.build()
+        const parser = await ParserClass.build(page)
 
         try {
             await parser.process()

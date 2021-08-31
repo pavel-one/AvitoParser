@@ -151,7 +151,7 @@ class ParserClass {
 
     _parsePage = async () => {
         const buttonSelector = '.item-phone-number > .button'
-        const gallerySelector = '.gallery-list-wrapper'
+        const gallerySelector = '.item-description'
 
         await this.wait(this.randomInteger(5, 20))
         await this.getAllPages()

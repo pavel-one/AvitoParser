@@ -5,6 +5,7 @@ const {request, response} = require("express");
 const port = 3000
 const child = require('child_process')
 const path = require("path");
+const {listDir} = require('./dir')
 
 app.set('view engine', 'pug');
 
@@ -24,27 +25,25 @@ app.get('/', (request, response) => {
 
 app.use('/static', express.static(path.join(__dirname, 'tmp')))
 app.get('/process', (req, res) => {
-    let images = getImagesFromDir(path.join(__dirname, 'tmp'));
+    let images = getImagesFromDir('/tmp');
     res.render('index', {title: 'Процесс парсинга', images: images})
 });
 
 function getImagesFromDir(dirPath) {
     let allImages = [];
 
-    let files = fs.readdirSync(dirPath);
+    let files = listDir(dirPath);
 
     let file;
     for (file of files) {
-        let fileLocation = path.join(dirPath, file);
-        const stat = fs.statSync(fileLocation);
-        if (stat && stat.isDirectory()) {
-            getImagesFromDir(fileLocation);
-        } else if (stat && stat.isFile() && ['.jpg', '.png'].indexOf(path.extname(fileLocation)) !== -1) {
-            allImages.push({
-                url: 'static/' + file,
-                name: file
-            });
+        if (file.filename === '.gitignore') {
+            continue;
         }
+
+        allImages.unshift({
+            url: 'static/' + file.filename,
+            name: file.filename
+        });
     }
 
     return allImages;

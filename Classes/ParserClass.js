@@ -114,7 +114,12 @@ class ParserClass {
     }
 
     process = async () => {
-        await this._preparePage()
+        try {
+            await this._preparePage()
+        } catch (e) {
+            console.log('!! PROCESS ERROR, RELOAD !!', e.message)
+            await this.process()
+        }
     };
 
     _preparePage = async () => {
@@ -284,6 +289,7 @@ class ParserClass {
     };
 
     wait = async (second = 15) => {
+        second = second + (second * 0.5)
         console.log('WAIT: ', second)
         return this.page.waitForTimeout(second * 1000)
     };

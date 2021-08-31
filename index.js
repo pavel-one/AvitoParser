@@ -88,7 +88,12 @@ app.get('/run', (request, response) => {
         return;
     }
 
-    parser = child.fork('parser.js');
+    if (request.query.reload === '1') {
+        parser = child.fork(__dirname + '/avito.js', ['new']);
+    } else {
+        parser = child.fork(__dirname + '/avito.js');
+    }
+
 
     process.on('message', function (m) {
         console.log('PARSER MESSAGE:', m)

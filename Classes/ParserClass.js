@@ -27,7 +27,7 @@ class ParserClass {
     pageNumber = 1
     iterate = 0
 
-    static build = async () => {
+    static build = async (pageNumber) => {
         const parser = new ParserClass()
 
         fs.readdir(parser.tmpPath, (err, files) => {
@@ -46,6 +46,7 @@ class ParserClass {
             }
         });
 
+        parser.pageNumber = pageNumber
         parser.result = []
 
         parser.tesseract = await createWorker()
@@ -114,12 +115,7 @@ class ParserClass {
     }
 
     process = async () => {
-        try {
-            await this._preparePage()
-        } catch (e) {
-            console.log('!! PROCESS ERROR, RELOAD !!', e.message)
-            await this.process()
-        }
+        await this._preparePage()
     };
 
     _preparePage = async () => {
@@ -162,17 +158,6 @@ class ParserClass {
             }
             console.log('MOVE SELECTOR:', selector)
         }))
-
-        //Логика завершения или смены страницы
-        this.lastPage = await this.getLastPage()
-
-        if (this.pageNumber === this.lastPage) {
-            return true
-        }
-
-        this.pageNumber++
-        this.iterate = 0
-        await this.process()
     }
 
     _parsePage = async () => {
@@ -249,7 +234,7 @@ class ParserClass {
     }
 
     _writeToFile = async () => {
-        await fs.writeFileSync("output.json", JSON.stringify(this.result), 'utf8');
+        await fs.writeFileSync(`${this.pageNumber}.output.json`, JSON.stringify(this.result), 'utf8');
     }
 
     randomInteger = (min, max) => {

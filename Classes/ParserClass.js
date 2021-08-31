@@ -148,15 +148,15 @@ class ParserClass {
         selectors = __.shuffle(selectors) //сортируем селекторы, чтобы кликать не по порядку
 
         //Кликаем по селекторам
-        for (selector of selectors) {
+        for (let selectorName of selectors) {
             try {
-                await cursor.click(selector)
+                await cursor.click(selectorName)
                 await this._parsePage()
                 await this._writeToFile()
             } catch (e) {
                 console.log('!! PARSE ERROR !!', e.message)
             }
-            console.log('MOVE SELECTOR:', selector)
+            console.log('MOVE SELECTOR:', selectorName)
         }
     }
 

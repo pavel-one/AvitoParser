@@ -23,6 +23,8 @@ class ParserClass {
     rootDir = __dirname + '/../'
     cookiesPath = this.rootDir + 'cookies.json'
 
+    iterate = 0
+
     static build = async () => {
         const parser = new ParserClass()
 
@@ -54,7 +56,7 @@ class ParserClass {
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
-                // "--proxy-server=194.28.209.74:8000",
+                "--proxy-server=194.28.209.74:8000",
                 '--disable-dev-shm-usage'
             ],
             defaultViewport: {
@@ -65,10 +67,10 @@ class ParserClass {
 
         parser.page = await parser.browser.newPage()
 
-        // await parser.page.authenticate({
-        //     username: 'r423W1',
-        //     password: 'hDzWcB'
-        // })
+        await parser.page.authenticate({
+            username: 'r423W1',
+            password: 'hDzWcB'
+        })
         await parser.page.goto('https://google.com')
         await parser.page.goto(parser.base_url)
         // await parser.page.waitForNavigation()
@@ -254,8 +256,9 @@ class ParserClass {
         message = await __(message).truncate(8)
         console.log('[LOG]: ', message)
         await this.page.screenshot({
-            path: this.tmpPath + `/${message}.png`
+            path: this.tmpPath + `/${this.iterate}.${message}.png`
         })
+        this.iterate++
 
         const cookies = await this.page.cookies();
         await fs.writeFileSync(this.cookiesPath, JSON.stringify(cookies, null, 2));

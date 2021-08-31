@@ -166,13 +166,13 @@ class ParserClass {
         //Логика завершения или смены страницы
         this.lastPage = this.getLastPage()
 
-        if (this.pageNumber === this.lastPage) {
-            return true
-        }
+        // if (this.pageNumber === this.lastPage) {
+        //     return true
+        // }
 
-        this.pageNumber++
-        this.iterate = 0
-        await this._preparePage()
+        // this.pageNumber++
+        // this.iterate = 0
+        // await this._preparePage()
     }
 
     _parsePage = async () => {

@@ -6,6 +6,7 @@ html
     include style.css
   body
   h1=title
+    div.process=process.current + ' страница из ' + process.last
     div.photos
         each image in images
             div.photo

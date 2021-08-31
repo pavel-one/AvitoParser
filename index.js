@@ -40,7 +40,21 @@ app.use('/static', express.static(path.join(__dirname, 'tmp')))
 app.use('/result', express.static(path.join(__dirname, 'results')))
 app.get('/process', (req, res) => {
     let images = getImagesFromDir(path.join(__dirname, 'tmp'));
-    res.render('index', {title: 'Процесс парсинга', images: images})
+    const pagesObjectPath = 'pagesObject.json'
+    let processParse = {
+        current: 1,
+        last: 1
+    }
+
+    if (fs.existsSync(pagesObjectPath)) {
+        processParse = JSON.parse(fs.readFileSync(pagesObjectPath))
+    }
+
+    res.render('index', {
+        title: 'Процесс парсинга',
+        images: images,
+        process: processParse
+    })
 });
 
 function getImagesFromDir(dirPath) {

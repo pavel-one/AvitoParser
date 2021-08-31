@@ -35,3 +35,8 @@ h1 {
 .photo img {
     width: 100%;
 }
+.process {
+    font-size: .7em;
+    color: #555;
+    margin-bottom: 10px;
+}

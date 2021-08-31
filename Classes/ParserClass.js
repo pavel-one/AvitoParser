@@ -9,6 +9,13 @@ const fs = require("fs");
 const __ = require('lodash');
 const path = require("path");
 
+const loggerOptions = {
+    errorEventName: 'error',
+    logDirectory: __dirname + '/../logs',
+    fileNamePattern: 'parser-<DATE>.log',
+    timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+    dateFormat: 'YYYY.MM.DD'
+};
 
 class ParserClass {
     link = 'https://www.avito.ru/moskva/gruzoviki_i_spetstehnika?radius=0'
@@ -23,6 +30,7 @@ class ParserClass {
     rootDir = __dirname + '/../'
     cookiesPath = this.rootDir + 'cookies.json'
     resultsPath = this.rootDir + 'results/'
+    logger = require('simple-node-logger').createRollingFileLogger(loggerOptions);
 
     lastPage = 1
     pageNumber = 1
@@ -77,8 +85,6 @@ class ParserClass {
         })
         await parser.page.goto('https://google.com')
         await parser.page.goto(parser.base_url)
-        // await parser.page.waitForNavigation()
-        // await parser.wait(10)
 
         if (fs.existsSync(parser.cookiesPath)) {
             console.log('COOKIE IS FILE')
@@ -90,6 +96,8 @@ class ParserClass {
         }
 
         await parser.log('PREPARE')
+        await parser.wait(3)
+        await parser.page.goto(parser.link)
         await parser.wait(3)
 
         parser.pages = await parser.browser.pages()
@@ -156,6 +164,7 @@ class ParserClass {
                 await this._writeToFile()
             } catch (e) {
                 console.log('!! PARSE ERROR !!', e.message)
+                this.logger.fatal(`!! PARSE ERROR !! ${e.message}`)
             }
             console.log('MOVE SELECTOR:', selectorName)
         }
@@ -186,6 +195,7 @@ class ParserClass {
             await this._saveContentPage()
         } catch (e) {
             console.log('!! ERROR PARSER PAGE !!', e.message)
+            this.logger.fatal(`!! ERROR PARSER PAGE !! ${e.message}`)
         }
 
         await this.page.close()
@@ -263,6 +273,7 @@ class ParserClass {
     }
 
     log = async (message = '') => {
+        this.logger.info(message)
         message = await __(message).truncate(8)
         console.log('[LOG]: ', message)
         await this.page.screenshot({
@@ -275,8 +286,8 @@ class ParserClass {
     };
 
     wait = async (second = 15) => {
-        // second = second + (second * 0.5)
         console.log('WAIT: ', second)
+        this.logger.debug(`Ждем ${second} секунд`)
         return this.page.waitForTimeout(second * 1000)
     };
 

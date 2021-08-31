@@ -148,7 +148,7 @@ class ParserClass {
         selectors = __.shuffle(selectors) //сортируем селекторы, чтобы кликать не по порядку
 
         //Кликаем по селекторам
-        await Promise.all(selectors.map(async selector => {
+        for (selector of selectors) {
             try {
                 await cursor.click(selector)
                 await this._parsePage()
@@ -157,7 +157,7 @@ class ParserClass {
                 console.log('!! PARSE ERROR !!', e.message)
             }
             console.log('MOVE SELECTOR:', selector)
-        }))
+        }
     }
 
     _parsePage = async () => {

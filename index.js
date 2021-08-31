@@ -12,17 +12,32 @@ let parser = '';
 
 app.get('/', (request, response) => {
     response.setHeader('Content-Type', 'application/json')
-    if (!fs.existsSync('output.json')) {
-        response.send({
-            'message': 'Результатов еще не сгенерирорвано, зайдите позже'
-        })
-    }
-    const json = fs.readFileSync('output.json')
 
-    response.send(JSON.parse(json))
+    const dir = path.join(__dirname, 'results')
+    let files = fs.readdirSync(dir);
+    let allFiles = []
+    let fullUrl = request.protocol + '://' + request.get('host') + request.originalUrl;
+
+    let file;
+    for (file of files) {
+        if (file === '.gitignore') {
+            continue;
+        }
+
+        let time = fs.statSync(`${dir}/${file}`).mtime.getTime();
+
+        allFiles.push({
+            url: fullUrl + 'result/' + file,
+            name: file,
+            time: time
+        });
+    }
+
+    response.send(allFiles)
 })
 
 app.use('/static', express.static(path.join(__dirname, 'tmp')))
+app.use('/result', express.static(path.join(__dirname, 'results')))
 app.get('/process', (req, res) => {
     let images = getImagesFromDir(path.join(__dirname, 'tmp'));
     res.render('index', {title: 'Процесс парсинга', images: images})

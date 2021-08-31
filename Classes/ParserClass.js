@@ -22,6 +22,7 @@ class ParserClass {
     tmpPath = __dirname + '/../tmp'
     rootDir = __dirname + '/../'
     cookiesPath = this.rootDir + 'cookies.json'
+    resultsPath = this.rootDir + 'results/'
 
     lastPage = 1
     pageNumber = 1
@@ -234,7 +235,7 @@ class ParserClass {
     }
 
     _writeToFile = async () => {
-        await fs.writeFileSync(`${this.pageNumber}.output.json`, JSON.stringify(this.result), 'utf8');
+        await fs.writeFileSync(`${this.resultsPath}${this.pageNumber}.output.json`, JSON.stringify(this.result), 'utf8');
     }
 
     randomInteger = (min, max) => {
@@ -274,7 +275,7 @@ class ParserClass {
     };
 
     wait = async (second = 15) => {
-        second = second + (second * 0.5)
+        // second = second + (second * 0.5)
         console.log('WAIT: ', second)
         return this.page.waitForTimeout(second * 1000)
     };

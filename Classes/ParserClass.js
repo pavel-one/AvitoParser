@@ -152,7 +152,7 @@ class ParserClass {
         selectors = __.shuffle(selectors) //сортируем селекторы, чтобы кликать не по порядку
 
         //Кликаем по селекторам
-        for (const selector of selectors) {
+        await Promise.all(selectors.map(async selector => {
             try {
                 await cursor.click(selector)
                 await this._parsePage()
@@ -161,18 +161,18 @@ class ParserClass {
                 console.log('!! PARSE ERROR !!', e.message)
             }
             console.log('MOVE SELECTOR:', selector)
-        }
+        }))
 
         //Логика завершения или смены страницы
-        this.lastPage = this.getLastPage()
+        this.lastPage = await this.getLastPage()
 
-        // if (this.pageNumber === this.lastPage) {
-        //     return true
-        // }
+        if (this.pageNumber === this.lastPage) {
+            return true
+        }
 
-        // this.pageNumber++
-        // this.iterate = 0
-        // await this._preparePage()
+        this.pageNumber++
+        this.iterate = 0
+        await this.process()
     }
 
     _parsePage = async () => {

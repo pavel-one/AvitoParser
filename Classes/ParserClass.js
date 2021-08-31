@@ -23,6 +23,8 @@ class ParserClass {
     rootDir = __dirname + '/../'
     cookiesPath = this.rootDir + 'cookies.json'
 
+    lastPage = 1
+    pageNumber = 1
     iterate = 0
 
     static build = async () => {
@@ -99,6 +101,12 @@ class ParserClass {
         console.log('PAGES COUNT: ', this.pages.length)
     }
 
+    getLastPage = async () => {
+        const $ = cheerio.load(await this.page.content());
+        let paginate = await $('[data-marker="pagination-button"]').find('span')
+        return Number(await $(paginate[paginate.length - 2]).text())
+    }
+
     changePage = async (page) => {
         this.page = page
         await this.page.bringToFront()
@@ -114,7 +122,7 @@ class ParserClass {
 
         //Инициализация
         const selector = '[data-marker="catalog-serp"] > [data-marker="item"]'
-        await this.page.goto(this.link)
+        await this.page.goto(this.link + `&p=${this.pageNumber}`)
         await this.page.waitForSelector(selector)
 
         //Работа с курсором
@@ -149,6 +157,16 @@ class ParserClass {
             }
             console.log('MOVE SELECTOR:', selector)
         }
+
+        //Логика завершения или смены страницы
+        this.lastPage = this.getLastPage()
+
+        if (this.pageNumber === this.lastPage) {
+            return true
+        }
+
+        this.pageNumber++
+        await this._preparePage()
     }
 
     _parsePage = async () => {
@@ -256,7 +274,7 @@ class ParserClass {
         message = await __(message).truncate(8)
         console.log('[LOG]: ', message)
         await this.page.screenshot({
-            path: this.tmpPath + `/${this.iterate}.${message}.png`
+            path: this.tmpPath + `/${this.iterate}_${this.pageNumber}.${message}.png`
         })
         this.iterate++
 

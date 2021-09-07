@@ -27,7 +27,7 @@ class ParserClass {
     resultsPath = this.rootDir + 'results/'
     logger = require('simple-node-logger').createRollingFileLogger(loggerOptions);
 
-    proxy = JSON.parse(await fs.readFileSync(this.rootDir + 'proxy.json'))
+    proxy = JSON.parse(fs.readFileSync(this.rootDir + 'proxy.json'))
 
     lastPage = 1
     pageNumber = 1

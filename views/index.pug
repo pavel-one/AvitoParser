@@ -25,3 +25,5 @@ html
                 label(for='password') Пароль от прокси
                 input(placeholder='Пароль' id='password' name='password' value=proxy.password)
             button.button(type='submit') Сохранить
+        div Текущая страница парсинга: #{processParse.current} из #{processParse.last}
+            a.button(href='clear') Сбросить

@@ -27,11 +27,28 @@ app.get('/', async (request, response) => {
 
     const proxy =  JSON.parse(await fs.readFileSync(proxyFilePath))
 
+    const pagesObjectPath = 'pagesObject.json'
+    let processParse = {
+        current: 1,
+        last: 1
+    }
+
+    if (fs.existsSync(pagesObjectPath)) {
+        processParse = JSON.parse(await fs.readFileSync(pagesObjectPath))
+    }
+
     response.render('index', {
         parserProcess,
         title,
-        proxy
+        proxy,
+        processParse
     })
+})
+
+app.get('/clear', async (request, response) => {
+    await fs.unlinkSync('pagesObject.json')
+
+    response.redirect('back')
 })
 
 app.post('/proxy', (request, response) => {

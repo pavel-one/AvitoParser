@@ -20,17 +20,14 @@ const loggerOptions = {
 class ParserClass {
     link = 'https://www.avito.ru/moskva/gruzoviki_i_spetstehnika?radius=0'
     base_url = 'https://www.avito.ru'
-    cookies = [
-        {
-            'name': 'sessid',
-            'value': '4820fba7f6169e2326a4b6eef4b95fbf.1629815805'
-        }
-    ]
+    cookies = []
     tmpPath = __dirname + '/../tmp'
     rootDir = __dirname + '/../'
     cookiesPath = this.rootDir + 'cookies.json'
     resultsPath = this.rootDir + 'results/'
     logger = require('simple-node-logger').createRollingFileLogger(loggerOptions);
+
+    proxy = JSON.parse(await fs.readFileSync(this.rootDir + 'proxy.json'))
 
     lastPage = 1
     pageNumber = 1
@@ -68,7 +65,7 @@ class ParserClass {
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
-                "--proxy-server=194.28.209.74:8000",
+                "--proxy-server=" + parser.proxy.host,
                 '--disable-dev-shm-usage'
             ],
             defaultViewport: {
@@ -80,8 +77,8 @@ class ParserClass {
         parser.page = await parser.browser.newPage()
 
         await parser.page.authenticate({
-            username: 'r423W1',
-            password: 'hDzWcB'
+            username: parser.proxy.username,
+            password: parser.proxy.password
         })
         await parser.page.goto('https://google.com')
         await parser.page.goto(parser.base_url)
@@ -229,8 +226,54 @@ class ParserClass {
             salerName: '',
             address: '',
             date: '',
-            link: ''
+            link: '',
+            description: '',
+            breadcrumbs: [],
+            gallery: [],
+            params: [],
         };
+
+        //Хлебрные крошки
+        const $breadcrumbs = $('.breadcrumbs [itemprop="itemListElement"]')
+        if ($breadcrumbs.length) {
+            await $breadcrumbs.each(async function () {
+                let $a = await $(this).find('a')
+                let $span = await $a.find('span')
+                out.breadcrumbs.push({
+                    name: await $span.text(),
+                    link: await $a.attr('href')
+                })
+            })
+        }
+
+        //Галерея
+        const $gallery = $('.gallery-img-wrapper')
+        if ($gallery.length) {
+            await $gallery.each(async function () {
+                let $frame = await $(this).find('.gallery-img-frame')
+                out.gallery.push({
+                    name: $frame.data('title'),
+                    link: $frame.data('url')
+                })
+            })
+        }
+
+        //Параметры
+        const $params = $('.item-params-list .item-params-list-item')
+        if ($params.length) {
+            await $params.each(async function () {
+                out.params.push({
+                    name: await $(this).find('.item-params-label').text(),
+                    value: await $(this).text(),
+                })
+            })
+        }
+
+        //Описание
+        const $description = $('.item-description-html')
+        if ($description.length) {
+            out.description = $description.html()
+        }
 
         out.title = $('.title-info-title-text').text()
         out.price = $('.js-item-price').attr('content')

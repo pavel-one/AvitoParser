@@ -7,10 +7,21 @@ const child = require('child_process')
 const path = require("path");
 
 app.set('view engine', 'pug');
-
 let parser = '';
 
+app.use('/static', express.static(path.join(__dirname, 'tmp')))
+app.use('/result', express.static(path.join(__dirname, 'results')))
+
 app.get('/', (request, response) => {
+    console.log({
+        process: typeof parser === 'object'
+    })
+    response.render('index', {
+        process: typeof parser === 'object'
+    })
+})
+
+app.get('/files', (req, res) => {
     response.setHeader('Content-Type', 'application/json')
 
     const dir = path.join(__dirname, 'results')
@@ -36,8 +47,7 @@ app.get('/', (request, response) => {
     response.send(allFiles)
 })
 
-app.use('/static', express.static(path.join(__dirname, 'tmp')))
-app.use('/result', express.static(path.join(__dirname, 'results')))
+
 app.get('/process', (req, res) => {
     let images = getImagesFromDir(path.join(__dirname, 'tmp'));
     const pagesObjectPath = 'pagesObject.json'
@@ -50,35 +60,14 @@ app.get('/process', (req, res) => {
         processParse = JSON.parse(fs.readFileSync(pagesObjectPath))
     }
 
-    res.render('index', {
+    res.render('process', {
         title: 'Процесс парсинга',
         images: images,
         process: processParse
     })
 });
 
-function getImagesFromDir(dirPath) {
 
-    let allImages = [];
-
-    let files = fs.readdirSync(dirPath);
-
-    let file;
-    for (file of files) {
-        if (file === '.gitignore') {
-            continue;
-        }
-
-        let fileLocation = path.join(dirPath, file);
-        const stat = fs.statSync(fileLocation);
-        allImages.push({
-            url: 'static/'+file,
-            name: file
-        });
-    }
-
-    return allImages;
-}
 
 app.get('/run', (request, response) => {
     if (typeof parser === 'object') {
@@ -124,3 +113,26 @@ app.listen(port, (err) => {
     }
     console.log(`Сервер запущен на ${port}`)
 })
+
+function getImagesFromDir(dirPath) {
+
+    let allImages = [];
+
+    let files = fs.readdirSync(dirPath);
+
+    let file;
+    for (file of files) {
+        if (file === '.gitignore') {
+            continue;
+        }
+
+        let fileLocation = path.join(dirPath, file);
+        const stat = fs.statSync(fileLocation);
+        allImages.push({
+            url: 'static/'+file,
+            name: file
+        });
+    }
+
+    return allImages;
+}

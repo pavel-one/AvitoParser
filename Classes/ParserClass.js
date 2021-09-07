@@ -25,6 +25,8 @@ class ParserClass {
     rootDir = __dirname + '/../'
     cookiesPath = this.rootDir + 'cookies.json'
     resultsPath = this.rootDir + 'results/'
+    imagesPath = this.rootDir + 'images/'
+
     logger = require('simple-node-logger').createRollingFileLogger(loggerOptions);
 
     proxy = JSON.parse(fs.readFileSync(this.rootDir + 'proxy.json'))

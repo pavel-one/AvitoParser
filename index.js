@@ -19,6 +19,7 @@ let parser = '';
 
 app.use('/static', express.static(path.join(__dirname, 'tmp')))
 app.use('/result', express.static(path.join(__dirname, 'results')))
+app.use('/images', express.static(path.join(__dirname, 'images')))
 
 app.get('/', async (request, response) => {
 

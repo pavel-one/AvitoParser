@@ -8,6 +8,7 @@ const {createCursor} = require('ghost-cursor')
 const fs = require("fs");
 const __ = require('lodash');
 const path = require("path");
+const axios = require("axios");
 
 const loggerOptions = {
     errorEventName: 'error',
@@ -18,7 +19,7 @@ const loggerOptions = {
 };
 
 class ParserClass {
-    link = 'https://www.avito.ru/moskva/gruzoviki_i_spetstehnika?radius=0'
+    link = 'https://www.avito.ru/moskva/predlozheniya_uslug/transport_perevozki/spetstekhnika-ASgBAgICAkSYC8SfAZoL3J8B?cd=1'
     base_url = 'https://www.avito.ru'
     cookies = []
     tmpPath = __dirname + '/../tmp'
@@ -232,7 +233,7 @@ class ParserClass {
             description: '',
             breadcrumbs: [],
             gallery: [],
-            params: [],
+            props: [],
         };
 
         //Хлебрные крошки
@@ -250,13 +251,30 @@ class ParserClass {
 
         //Галерея
         const $gallery = $('.gallery-img-wrapper')
+        const self = this
         if ($gallery.length) {
             await $gallery.each(async function () {
                 let $frame = await $(this).find('.gallery-img-frame')
-                out.gallery.push({
-                    name: $frame.data('title'),
-                    link: $frame.data('url')
-                })
+                if ($frame.data('url')) {
+                    const url = $frame.data('url')
+                    let filename = url.split('/')
+                    filename = filename[filename.length - 1]
+
+                    const reg = new RegExp(/^(.*)\.(.*)$/g)
+                    if (!reg.test(filename)) {
+                        filename = filename + '.jpg'
+                    }
+
+                    try {
+                        self._saveImage(filename, url)
+                    } catch (e) {
+                        console.log('!! ERROR SAVE IMAGE !!', e)
+                    }
+
+                    out.gallery.push(
+                        '/images/' + filename
+                    )
+                }
             })
         }
 
@@ -264,9 +282,14 @@ class ParserClass {
         const $params = $('.item-params-list .item-params-list-item')
         if ($params.length) {
             await $params.each(async function () {
+                const name = await $(this).find('.item-params-label').text()
+                const fullText = await $(this).text()
+
+                const value = fullText.replace(name)
+
                 out.params.push({
-                    name: await $(this).find('.item-params-label').text(),
-                    value: await $(this).text(),
+                    name: name.trim(),
+                    value: value.trim(),
                 })
             })
         }
@@ -287,6 +310,25 @@ class ParserClass {
         out.link = await this.page.url()
 
         this.result.push(out);
+    }
+
+    _saveImage = async (filename, link) => {
+        const filePath = this.rootDir + 'images/' + filename
+
+        try {
+            const response = await axios({
+                method: "GET",
+                url: link,
+                responseType: "stream",
+            });
+            const w = response.data.pipe(fs.createWriteStream(filePath))
+            w.on('finish', () => {
+                console.log('Successfully downloaded file!');
+                w.close()
+            })
+        } catch (err) {
+            console.log('!! ERROR DOWNLOAD FILE !!', err.message)
+        }
     }
 
     _writeToFile = async () => {

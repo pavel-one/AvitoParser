@@ -4,6 +4,7 @@
     "host":"37.139.51.164:8000",
     "username":"cm43Eg",
     "password":"2yjxpN",
+    "pid": null,
     "pages": []
   },
   {
@@ -11,6 +12,7 @@
     "host":"46.161.29.233:8000",
     "username":"cm43Eg",
     "password":"2yjxpN",
+    "pid": null,
     "pages": []
   },
   {
@@ -18,6 +20,7 @@
     "host":"37.139.51.94:8000",
     "username":"cm43Eg",
     "password":"2yjxpN",
+    "pid": null,
     "pages": []
   },
   {
@@ -25,6 +28,7 @@
     "host":"37.139.51.71:8000",
     "username":"cm43Eg",
     "password":"2yjxpN",
+    "pid": null,
     "pages": []
   },
   {
@@ -32,6 +36,7 @@
     "host":"37.139.53.234:8000",
     "username":"cm43Eg",
     "password":"2yjxpN",
+    "pid": null,
     "pages": []
   }
 ]

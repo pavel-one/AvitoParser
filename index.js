@@ -78,7 +78,7 @@ app.post('/settings', async (request, response) => {
         }
     }
 
-    await fs.writeFileSync(helper.settingsPath, JSON.stringify(settings))
+    await helper.setSettings(settings)
 
     response.redirect('back')
 })
@@ -126,23 +126,26 @@ app.get('/process', (req, res) => {
         process: processParse
     })
 });
-app.get('/run', (request, response) => {
-    if (typeof parser === 'object') {
-        response.send({
-            message: `Парсер запущен, id процесса ${parser.pid} ожидайте завершения, или завершите вручную`
-        })
-        return;
-    }
+app.get('/run/:id', async (request, response) => {
+    const id = request.params.id
+    let setting = await helper.getSetting(id)
 
-    if (request.query.reload === '1') {
-        parser = child.fork(__dirname + '/avito.js', ['new']);
-    } else {
-        parser = child.fork(__dirname + '/avito.js');
-    }
+    const childProcess = child.fork(
+        path.join(__dirname, 'start.js'),
+        [setting.id]
+    )
+    setting.pid = childProcess.pid
 
+    await helper.setSetting(setting)
 
-    process.on('message', function (m) {
-        console.log('PARSER MESSAGE:', m)
+    childProcess.on('message', function (m) {
+        console.log(`[${id}] PARSER: `, m)
+    })
+
+    childProcess.on('exit', async function () {
+        setting = await helper.getSetting(id)
+        setting.pid = null
+        await helper.setSetting(setting)
     })
 
     response.redirect('back')

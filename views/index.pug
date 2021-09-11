@@ -4,9 +4,8 @@ html
   style
     include style.css
   body
-    h1=title
     div.parser-list
-        h1 Процессы парсинга
+        h1=title
         if !settings.pages
             div.index-form
                 form(action='/settings' method='POST')
@@ -26,6 +25,9 @@ html
                     div=proxy.host
                     div.pages(style='text-align: center')=proxy.pages.join(', ')
                     div.actions
-                        a.button(href="/run/"+proxy.id) Запустить
+                        if !proxy.pid
+                            a.button.runButton(href="/run/"+proxy.id) Запустить
+                        else
+                            a.button.stopButton(href="/stop/"+proxy.id) Остановить
                         a.button(href="/files/"+proxy.id) JSON
                         a.button(href="/process/"+proxy.id) Скриншоты

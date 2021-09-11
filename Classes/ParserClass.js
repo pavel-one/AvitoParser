@@ -30,13 +30,13 @@ class ParserClass {
 
     logger = require('simple-node-logger').createRollingFileLogger(loggerOptions);
 
-    proxy = JSON.parse(fs.readFileSync(this.rootDir + 'proxy.json'))
+    proxy = {}
 
     lastPage = 1
     pageNumber = 1
     iterate = 0
 
-    static build = async (pageNumber) => {
+    static build = async (pageNumber, proxy) => {
         const parser = new ParserClass()
 
         fs.readdir(parser.tmpPath, (err, files) => {
@@ -56,6 +56,7 @@ class ParserClass {
         });
 
         parser.pageNumber = pageNumber
+        parser.proxy = proxy
         parser.result = []
 
         parser.tesseract = await createWorker()

@@ -5,25 +5,27 @@ html
     include style.css
   body
     h1=title
-    div.index
-        if !parserProcess
-            a.button.runButton(href="/run") Запустить парсинг
+    div.parser-list
+        h1 Процессы парсинга
+        if !settings.pages
+            div.index-form
+                form(action='/settings' method='POST')
+                    input(placeholder='Сколько страниц парсить' name='pages' type='number' value=settings.pages)
+                    button.button(type='submit') Сохранить
         else
-            a.button.stopButton(href="/stop") Остановить парсинг
-        a.button(href="/files") Результаты парсинга
-        a.button(href="/process") Процесс парсинга
-    div.index-form
-        h1 HTTPS Прокси
-        form(method='post' action='/proxy')
-            div.form-input
-                label(for='host') Хост вида (ip:port)
-                input(placeholder='host' id='host' name='host' value=proxy.host)
-            div.form-input
-                label(for='username') Логин
-                input(placeholder='Логин' id='username' name='username' value=proxy.username)
-            div.form-input
-                label(for='password') Пароль от прокси
-                input(placeholder='Пароль' id='password' name='password' value=proxy.password)
-            button.button(type='submit') Сохранить
-        div Текущая страница парсинга: #{processParse.current} из #{processParse.last}
-            a.button(href='clear') Сбросить
+            div.index-form
+                form(action='/clear' method='POST')
+                    button.button(type='submit') Сбросить
+        if settings.pages
+            div.item
+                div(style='text-align: center') Хост
+                div(style='text-align: center') Страницы
+                div(style='text-align: center') Действия
+            each proxy in settings.proxy
+                div.item
+                    div=proxy.host
+                    div.pages(style='text-align: center')=proxy.pages.join(', ')
+                    div.actions
+                        a.button(href="/run/"+proxy.id) Запустить
+                        a.button(href="/files/"+proxy.id) JSON
+                        a.button(href="/process/"+proxy.id) Скриншоты

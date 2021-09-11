@@ -79,6 +79,10 @@ h1 {
 .button.stopButton:hover {
     background: red;
 }
+.button[disabled=disabled] {
+    background: #999;
+    pointer-events: none;
+}
 .index-form {
     display: flex;
     flex-direction: column;
@@ -107,4 +111,35 @@ h1 {
 .index-form form input:focus {
     border: 1px solid #f6e09c;
     outline: none;
+}
+
+.parser-list {
+    max-width: 600px;
+    margin: auto;
+}
+.parser-list .item {
+    margin: 30px 0;
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+
+}
+.parser-list .item .process {
+    font-size: .75em;
+    text-align: center;
+}
+.parser-list .item > div {
+    width: 200px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.parser-list .item > div .button {
+    width: 50%;
+    text-align: center;
+    margin: 1px 0;
+}
+.parser-list .item > div .button:first-child {
+    margin-top: 0;
 }

@@ -1,5 +1,5 @@
 /node_modules
 /.idea
 output.json
-cookies.json
-pagesObject.json
+settings.json
+test.js

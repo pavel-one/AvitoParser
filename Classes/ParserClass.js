@@ -63,7 +63,6 @@ class ParserClass {
         parser.result = []
 
 
-
         parser.browser = await puppeteer.launch({
             headless: true,
             args: [
@@ -273,7 +272,7 @@ class ParserClass {
                     }
 
                     out.gallery.push(
-                        filename
+                        '/' + filename
                     )
                 }
             })

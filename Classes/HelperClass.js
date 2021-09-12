@@ -7,6 +7,7 @@ class HelperClass {
     proxyPath = path.join(this.rootDir, 'proxy.json')
     settingsPath = path.join(this.rootDir, 'settings.json')
     resultPath = path.join(this.rootDir, 'results')
+    imagesPath = path.join(this.rootDir, 'images')
 
     getProxy = async () => {
         return JSON.parse(await fs.readFileSync(this.proxyPath))
@@ -69,6 +70,7 @@ class HelperClass {
         await this.setSetting(config)
     }
 
+    //Очищает результаты
     clearResult = async () => {
         const dir = fs.readdirSync(this.resultPath)
         for (const file of dir) {
@@ -76,7 +78,16 @@ class HelperClass {
                 continue;
             }
             console.log('REMOVE FILE' , file)
-            fs.unlinkSync(path.join(this.resultPath, file))
+            await fs.unlinkSync(path.join(this.resultPath, file))
+        }
+
+        const dir2 = fs.readdirSync(this.imagesPath)
+        for (const file of dir2) {
+            if (file === '.gitignore') {
+                continue;
+            }
+            console.log('REMOVE IMAGE' , file)
+            await fs.unlinkSync(path.join(this.imagesPath, file))
         }
     }
 }

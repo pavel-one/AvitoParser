@@ -1,4 +1,11 @@
+const {createWorker} = require("tesseract.js");
+
 (async () => {
+    const tesseract = await createWorker()
+    await tesseract.load()
+    await tesseract.loadLanguage('eng')
+    await tesseract.initialize('eng')
+
     const HelperClass = require('./Classes/HelperClass')
     const ParserClass = require('./Classes/ParserClass')
     const helper = new HelperClass()
@@ -30,7 +37,7 @@
     process.send(`Стартую парсинг id = ${id} page = ${page}`)
 
     try {
-        parser = await ParserClass.build(page, config)
+        parser = await ParserClass.build(page, config, tesseract)
     } catch (e) {
         console.log('!! BUILD ERROR !!', e)
         process.exit()
@@ -41,6 +48,7 @@
     } catch (e) {
         console.log("!! PARSER ERROR !!", e.message)
         await parser.close()
+        await tesseract.terminate()
     }
 
     await parser.close()

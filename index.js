@@ -6,10 +6,11 @@ const port = 3000
 const child = require('child_process')
 const path = require("path")
 const bodyParser = require('body-parser')
+const HelperClass = require('./Classes/HelperClass')
 
-const proxyFilePath = __dirname + '/proxy.json'
+const helper = new HelperClass()
 
-app.use( bodyParser.json() )
+app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
     extended: true
 }));
@@ -17,43 +18,58 @@ app.use(bodyParser.urlencoded({
 app.set('view engine', 'pug');
 let parser = '';
 
-app.use('/static', express.static(path.join(__dirname, 'tmp')))
-app.use('/result', express.static(path.join(__dirname, 'results')))
-app.use('/images', express.static(path.join(__dirname, 'images')))
+app.use(
+    express.static(path.join(__dirname, 'tmp')),
+    express.static(path.join(__dirname, 'results')),
+    express.static(path.join(__dirname, 'images'))
+)
 
 app.get('/', async (request, response) => {
 
     const title = 'Управление парсером'
     let parserProcess = typeof parser === 'object';
 
-    const proxy =  JSON.parse(await fs.readFileSync(proxyFilePath))
-
-    const pagesObjectPath = 'pagesObject.json'
-    let processParse = {
-        current: 1,
-        last: 1
+    let settings = {
+        pages: null,
+        proxy: await helper.getProxy()
     }
 
-    if (fs.existsSync(pagesObjectPath)) {
-        processParse = JSON.parse(await fs.readFileSync(pagesObjectPath))
+    if (fs.existsSync(helper.settingsPath)) {
+        settings = await helper.getSettings()
     }
 
     response.render('index', {
         parserProcess,
         title,
-        proxy,
-        processParse
+        settings
     })
 })
-
-app.get('/clear', async (request, response) => {
-    await fs.unlinkSync('pagesObject.json')
+app.post('/clear', async (request, response) => {
+    await fs.unlinkSync(helper.settingsPath)
+    await helper.clearResult()
 
     response.redirect('back')
 })
+app.post('/settings', async (request, response) => {
+    const pages = request.body.pages
+    const proxy = await helper.getProxy()
 
-app.post('/proxy', (request, response) => {
-    fs.writeFileSync(proxyFilePath, JSON.stringify(request.body))
+    let settings = {
+        pages,
+        proxy,
+    }
+
+    let ii = proxy.length
+    for (let i = 1; i <= pages; i++) {
+        settings.proxy[ii - 1].pages.push(i)
+
+        --ii
+        if (ii < 1) {
+            ii = proxy.length
+        }
+    }
+
+    await helper.setSettings(settings)
 
     response.redirect('back')
 })
@@ -75,7 +91,7 @@ app.get('/files', (request, response) => {
         let time = fs.statSync(`${dir}/${file}`).mtime.getTime();
 
         allFiles.push({
-            url: fullUrl + '/result/' + file,
+            url: `${fullUrl}/${file}`,
             name: file,
             time: time
         });
@@ -83,55 +99,47 @@ app.get('/files', (request, response) => {
 
     response.send(allFiles)
 })
-app.get('/process', (req, res) => {
-    let images = getImagesFromDir(path.join(__dirname, 'tmp'));
-    const pagesObjectPath = 'pagesObject.json'
-    let processParse = {
-        current: 1,
-        last: 1
-    }
+app.get('/process/:id', async (req, res) => {
+    const id = req.params.id
 
-    if (fs.existsSync(pagesObjectPath)) {
-        processParse = JSON.parse(fs.readFileSync(pagesObjectPath))
-    }
+    let images = getImagesFromDir(path.join(__dirname, `tmp/${id}`));
 
     res.render('process', {
         title: 'Процесс парсинга',
         images: images,
-        process: processParse
+        id: id
     })
 });
-app.get('/run', (request, response) => {
-    if (typeof parser === 'object') {
-        response.send({
-            message: `Парсер запущен, id процесса ${parser.pid} ожидайте завершения, или завершите вручную`
-        })
-        return;
-    }
+app.get('/run/:id', async (request, response) => {
+    const id = request.params.id
+    let setting = await helper.getSetting(id)
 
-    if (request.query.reload === '1') {
-        parser = child.fork(__dirname + '/avito.js', ['new']);
-    } else {
-        parser = child.fork(__dirname + '/avito.js');
-    }
+    const childProcess = child.fork(
+        path.join(__dirname, 'start.js'),
+        [setting.id]
+    )
+    setting.pid = childProcess.pid
 
+    await helper.setSetting(setting)
 
-    process.on('message', function (m) {
-        console.log('PARSER MESSAGE:', m)
+    childProcess.on('message', function (m) {
+        console.log(`[${id}] PARSER: `, m)
+    })
+
+    childProcess.on('exit', async function () {
+        setting = await helper.getSetting(id)
+        setting.pid = null
+        await helper.setSetting(setting)
     })
 
     response.redirect('back')
 })
-app.get('/stop', (request, response) => {
-    if (typeof parser !== 'object') {
-        response.send({
-            message: `Парсер не запущен`
-        })
-        return '';
-    }
+app.get('/stop/:id', async (request, response) => {
+    const id = request.params.id
+    const setting = await helper.getSetting(id)
 
-    parser.kill();
-    parser = '';
+    await helper.closeProcess(setting)
+
     response.redirect('back')
 })
 
@@ -157,7 +165,7 @@ function getImagesFromDir(dirPath) {
         let fileLocation = path.join(dirPath, file);
         const stat = fs.statSync(fileLocation);
         allImages.push({
-            url: 'static/'+file,
+            url: file,
             name: file
         });
     }

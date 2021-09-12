@@ -3,7 +3,6 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 puppeteer.use(StealthPlugin())
 
 const cheerio = require('cheerio');
-const {createWorker} = require('tesseract.js');
 const {createCursor} = require('ghost-cursor')
 const fs = require("fs");
 const __ = require('lodash');
@@ -22,22 +21,27 @@ class ParserClass {
     link = 'https://www.avito.ru/moskva/predlozheniya_uslug/transport_perevozki/spetstekhnika-ASgBAgICAkSYC8SfAZoL3J8B?cd=1'
     base_url = 'https://www.avito.ru'
     cookies = []
-    tmpPath = __dirname + '/../tmp'
+    proxy = {}
     rootDir = __dirname + '/../'
-    cookiesPath = this.rootDir + 'cookies.json'
+    tmpPath = ''
+    cookiesPath = ''
+    tesseract
     resultsPath = this.rootDir + 'results/'
     imagesPath = this.rootDir + 'images/'
 
     logger = require('simple-node-logger').createRollingFileLogger(loggerOptions);
 
-    proxy = JSON.parse(fs.readFileSync(this.rootDir + 'proxy.json'))
-
     lastPage = 1
     pageNumber = 1
     iterate = 0
 
-    static build = async (pageNumber) => {
+    static build = async (pageNumber, proxy, tesseract) => {
         const parser = new ParserClass()
+        parser.proxy = proxy
+        parser.tesseract = tesseract
+
+        parser.tmpPath = `${parser.rootDir}tmp/${parser.proxy.id}/`
+        parser.cookiesPath = `${parser.rootDir}cookies/${parser.proxy.id}/cookies.json`
 
         fs.readdir(parser.tmpPath, (err, files) => {
             if (err) throw err;
@@ -58,10 +62,6 @@ class ParserClass {
         parser.pageNumber = pageNumber
         parser.result = []
 
-        parser.tesseract = await createWorker()
-        await parser.tesseract.load();
-        await parser.tesseract.loadLanguage('eng');
-        await parser.tesseract.initialize('eng');
 
         parser.browser = await puppeteer.launch({
             headless: true,
@@ -266,13 +266,13 @@ class ParserClass {
                     }
 
                     try {
-                        self._saveImage(filename, url)
+                        await self._saveImage(filename, url)
                     } catch (e) {
                         console.log('!! ERROR SAVE IMAGE !!', e)
                     }
 
                     out.gallery.push(
-                        '/images/' + filename
+                        '/' + filename
                     )
                 }
             })
@@ -380,7 +380,6 @@ class ParserClass {
 
     close = async () => {
         await this.browser.close()
-        await this.tesseract.terminate()
     };
 }
 

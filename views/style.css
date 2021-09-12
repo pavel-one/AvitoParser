@@ -143,3 +143,14 @@ h1 {
 .parser-list .item > div .button:first-child {
     margin-top: 0;
 }
+.btn-group {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+.link {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    margin: 5px 0;
+}

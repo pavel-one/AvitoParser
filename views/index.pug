@@ -6,15 +6,21 @@ html
   body
     div.parser-list
         h1=title
-        if !settings.pages
-            div.index-form
+        a.link(
+        href='https://www.avito.ru/moskva/predlozheniya_uslug/transport_perevozki/spetstekhnika-ASgBAgICAkSYC8SfAZoL3J8B?cd=1'
+        target='_blank'
+        ) Ссылка на страницу парсинга
+        div.index-form
+            if !settings.pages
                 form(action='/settings' method='POST')
                     input(placeholder='Сколько страниц парсить' name='pages' type='number' value=settings.pages)
                     button.button(type='submit') Сохранить
-        else
-            div.index-form
+            else
                 form(action='/clear' method='POST')
-                    button.button(type='submit') Сбросить
+                    .btn-group
+                        button.button(type='submit') Сбросить
+                        a.button.runButton(href="/files") JSON
+                p Внимание, сброс приведет к удалению файлов предыдущих результатов парсинга
         if settings.pages
             div.item
                 div(style='text-align: center') Хост
@@ -29,5 +35,4 @@ html
                             a.button.runButton(href="/run/"+proxy.id) Запустить
                         else
                             a.button.stopButton(href="/stop/"+proxy.id) Остановить
-                        a.button(href="/files/"+proxy.id) JSON
                         a.button(href="/process/"+proxy.id) Скриншоты

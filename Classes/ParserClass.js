@@ -267,13 +267,13 @@ class ParserClass {
                     }
 
                     try {
-                        self._saveImage(filename, url)
+                        await self._saveImage(filename, url)
                     } catch (e) {
                         console.log('!! ERROR SAVE IMAGE !!', e)
                     }
 
                     out.gallery.push(
-                        '/images/' + filename
+                        filename
                     )
                 }
             })

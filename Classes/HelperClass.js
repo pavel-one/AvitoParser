@@ -6,6 +6,7 @@ class HelperClass {
     cookiesPath = path.join(this.rootDir, 'cookies')
     proxyPath = path.join(this.rootDir, 'proxy.json')
     settingsPath = path.join(this.rootDir, 'settings.json')
+    resultPath = path.join(this.rootDir, 'results')
 
     getProxy = async () => {
         return JSON.parse(await fs.readFileSync(this.proxyPath))
@@ -52,6 +53,31 @@ class HelperClass {
         }))
 
         await this.setSettings(allSettings)
+    }
+
+    //Удаляет одну страницу из настроек
+    removePage = async (config, page) => {
+        config.pages = config.pages.filter((item, index) => {
+            if (item === page) {
+                console.log('removed', item)
+                return null;
+            }
+
+            return item;
+        })
+
+        await this.setSetting(config)
+    }
+
+    clearResult = async () => {
+        const dir = fs.readdirSync(this.resultPath)
+        for (const file of dir) {
+            if (file === '.gitignore') {
+                continue;
+            }
+            console.log('REMOVE FILE' , file)
+            fs.unlinkSync(path.join(this.resultPath, file))
+        }
     }
 }
 

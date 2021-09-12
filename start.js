@@ -12,46 +12,33 @@ const {createWorker} = require("tesseract.js");
     const id = Number(process.argv[2])
     const config = await helper.getSetting(id)
 
-    // await Promise.all(config.pages.map(async (page) => {
-    //     let parser
-    //     process.send(`Стартую парсинг id = ${id} page = ${page}`)
-    //
-    //     try {
-    //         parser = await ParserClass.build(page, config)
-    //     } catch (e) {
-    //         console.log('!! BUILD ERROR !!', e)
-    //         return page;
-    //     }
-    //
-    //     try {
-    //         await parser.process()
-    //     } catch (e) {
-    //         console.log("!! PARSER ERROR !!", e.message)
-    //         await parser.close()
-    //     }
-    //
-    //     await parser.close()
-    // }))
-    let page = config.pages[0]
-    let parser
-    process.send(`Стартую парсинг id = ${id} page = ${page}`)
+    for (const page of config.pages) {
+        let parser
+        process.send(`Стартую парсинг id = ${id} page = ${page}`)
 
-    try {
-        parser = await ParserClass.build(page, config, tesseract)
-    } catch (e) {
-        console.log('!! BUILD ERROR !!', e)
-        process.exit()
-    }
+        //Пробуем сбилдить парсер
+        try {
+            parser = await ParserClass.build(page, config, tesseract)
+        } catch (e) {
+            console.log('!! BUILD ERROR !!', e)
+            continue
+        }
 
-    try {
-        await parser.process()
-    } catch (e) {
-        console.log("!! PARSER ERROR !!", e.message)
+        //Запускаем парсер, если билд ОК
+        try {
+            await parser.process()
+        } catch (e) {
+            console.log("!! PARSER ERROR !!", e.message)
+            await parser.close()
+            continue
+        }
+
+        //Страница отработала
+        await helper.removePage(config, page)
         await parser.close()
-        await tesseract.terminate()
     }
 
-    await parser.close()
-
+    //Все страницы прошли, закрываем процесс, убиваем зависимости
+    await tesseract.terminate()
     process.exit()
 })()

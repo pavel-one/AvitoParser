@@ -6,12 +6,12 @@ html
     include style.css
   body
   h1=title
-    div.process=process.current + ' страница из ' + process.last
+    div.process='Скриншоты парсинга процесса #'+id
     div.photos
         each image in images
             div.photo
                 div.body
-                    a(href=image.url target=_blank)
-                        img(src=image.url)
+                    a(href=`/${id}/${image.url}` target=_blank)
+                        img(src=`/${id}/${image.url}`)
                 div.title
                     span=image.name

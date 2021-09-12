@@ -18,9 +18,11 @@ app.use(bodyParser.urlencoded({
 app.set('view engine', 'pug');
 let parser = '';
 
-app.use('/static', express.static(path.join(__dirname, 'tmp')))
-app.use('/result', express.static(path.join(__dirname, 'results')))
-app.use('/images', express.static(path.join(__dirname, 'images')))
+app.use(
+    express.static(path.join(__dirname, 'tmp')),
+    express.static(path.join(__dirname, 'results')),
+    express.static(path.join(__dirname, 'images'))
+)
 
 app.get('/', async (request, response) => {
 
@@ -36,26 +38,15 @@ app.get('/', async (request, response) => {
         settings = await helper.getSettings()
     }
 
-
-    // const pagesObjectPath = 'pagesObject.json'
-    // let processParse = {
-    //     current: 1,
-    //     last: 1
-    // }
-    //
-    // if (fs.existsSync(pagesObjectPath)) {
-    //     processParse = JSON.parse(await fs.readFileSync(pagesObjectPath))
-    // }
-
     response.render('index', {
         parserProcess,
         title,
-        settings,
-        // processParse
+        settings
     })
 })
 app.post('/clear', async (request, response) => {
     await fs.unlinkSync(helper.settingsPath)
+    await helper.clearResult()
 
     response.redirect('back')
 })
@@ -100,7 +91,7 @@ app.get('/files', (request, response) => {
         let time = fs.statSync(`${dir}/${file}`).mtime.getTime();
 
         allFiles.push({
-            url: fullUrl + '/result/' + file,
+            url: `${fullUrl}/${file}`,
             name: file,
             time: time
         });
@@ -108,22 +99,15 @@ app.get('/files', (request, response) => {
 
     response.send(allFiles)
 })
-app.get('/process', (req, res) => {
-    let images = getImagesFromDir(path.join(__dirname, 'tmp'));
-    const pagesObjectPath = 'pagesObject.json'
-    let processParse = {
-        current: 1,
-        last: 1
-    }
+app.get('/process/:id', async (req, res) => {
+    const id = req.params.id
 
-    if (fs.existsSync(pagesObjectPath)) {
-        processParse = JSON.parse(fs.readFileSync(pagesObjectPath))
-    }
+    let images = getImagesFromDir(path.join(__dirname, `tmp/${id}`));
 
     res.render('process', {
         title: 'Процесс парсинга',
         images: images,
-        process: processParse
+        id: id
     })
 });
 app.get('/run/:id', async (request, response) => {
@@ -150,16 +134,12 @@ app.get('/run/:id', async (request, response) => {
 
     response.redirect('back')
 })
-app.get('/stop', (request, response) => {
-    if (typeof parser !== 'object') {
-        response.send({
-            message: `Парсер не запущен`
-        })
-        return '';
-    }
+app.get('/stop/:id', async (request, response) => {
+    const id = request.params.id
+    const setting = await helper.getSetting(id)
 
-    parser.kill();
-    parser = '';
+    process.kill(setting.pid)
+
     response.redirect('back')
 })
 
@@ -185,7 +165,7 @@ function getImagesFromDir(dirPath) {
         let fileLocation = path.join(dirPath, file);
         const stat = fs.statSync(fileLocation);
         allImages.push({
-            url: 'static/' + file,
+            url: file,
             name: file
         });
     }

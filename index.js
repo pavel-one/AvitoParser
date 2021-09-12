@@ -138,7 +138,7 @@ app.get('/stop/:id', async (request, response) => {
     const id = request.params.id
     const setting = await helper.getSetting(id)
 
-    process.kill(setting.pid)
+    await helper.closeProcess(setting)
 
     response.redirect('back')
 })

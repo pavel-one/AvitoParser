@@ -70,6 +70,16 @@ class HelperClass {
         await this.setSetting(config)
     }
 
+    //Завершает дочерний процесс
+    closeProcess = async (config) => {
+        const pid = config.pid
+
+        config.pid = null;
+        await this.setSetting(config)
+
+        process.kill(pid)
+    }
+
     //Очищает результаты
     clearResult = async () => {
         const dir = fs.readdirSync(this.resultPath)

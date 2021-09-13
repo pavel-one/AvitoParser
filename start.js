@@ -24,6 +24,15 @@ const {createWorker} = require("tesseract.js");
             continue
         }
 
+        //Пробуем инициализировать страницу
+        try {
+            await parser.init()
+        } catch (e) {
+            await parser.close()
+            console.log('!! INIT ERROR !!', e)
+            continue
+        }
+
         //Запускаем парсер, если билд ОК
         try {
             await parser.process()

@@ -72,39 +72,41 @@ class ParserClass {
                 '--disable-dev-shm-usage'
             ],
             defaultViewport: {
-                width: 1920,
-                height: 1080
+                width: 1366,
+                height: 768
             }
         })
 
-        parser.page = await parser.browser.newPage()
+        return parser
+    }
 
-        await parser.page.authenticate({
-            username: parser.proxy.username,
-            password: parser.proxy.password
+    init = async () => {
+        this.page = await this.browser.newPage()
+
+        await this.page.authenticate({
+            username: this.proxy.username,
+            password: this.proxy.password
         })
-        await parser.page.goto('https://google.com')
-        await parser.page.goto(parser.base_url)
+        await this.page.goto('https://google.com')
+        await this.page.goto(this.base_url)
 
-        if (fs.existsSync(parser.cookiesPath)) {
+        if (fs.existsSync(this.cookiesPath)) {
             console.log('COOKIE IS FILE')
-            const cookiesRaw = await fs.readFileSync(parser.cookiesPath)
-            await parser.page.setCookie(...JSON.parse(cookiesRaw))
+            const cookiesRaw = await fs.readFileSync(this.cookiesPath)
+            await this.page.setCookie(...JSON.parse(cookiesRaw))
         } else {
             console.log('NEW COOKIE')
-            await parser.page.setCookie(...parser.cookies)
+            await this.page.setCookie(...this.cookies)
         }
 
-        await parser.log('PREPARE')
-        await parser.wait(3)
-        await parser.page.goto(parser.link)
-        await parser.wait(3)
+        await this.log('PREPARE')
+        await this.wait(3)
+        await this.page.goto(this.link)
+        await this.wait(3)
 
-        parser.pages = await parser.browser.pages()
-        console.log('PAGES COUNT: ', parser.pages.length)
-
-        return parser
-    };
+        this.pages = await this.browser.pages()
+        console.log('PAGES COUNT: ', this.pages.length)
+    }
 
     getAllPages = async () => {
         this.pages = await this.browser.pages();

@@ -21,10 +21,14 @@ html
                         button.button(type='submit') Сбросить
                         a.button.runButton(href="/files") JSON
                 p Внимание, сброс приведет к удалению файлов предыдущих результатов парсинга
+                h3 Пул страниц
+                div.pages-container
+                    each page in settings.pagesArr
+                        div.page-item(style=page.active ? 'color: red': '')=page.page
         if settings.pages
             div.item
                 div(style='text-align: center') Хост
-                div(style='text-align: center') Страницы
+                div(style='text-align: center') Активная страница
                 div(style='text-align: center') Действия
             each proxy in settings.proxy
                 div.item

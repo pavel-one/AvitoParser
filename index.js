@@ -55,6 +55,7 @@ app.post('/settings', async (request, response) => {
     const proxy = await helper.getProxy()
 
     let settings = {
+        pagesArr: [],
         pages,
         proxy,
     }
@@ -62,6 +63,10 @@ app.post('/settings', async (request, response) => {
     let ii = proxy.length
     for (let i = 1; i <= pages; i++) {
         settings.proxy[ii - 1].pages.push(i)
+        settings.pagesArr.push({
+            page: i,
+            active: false
+        })
 
         --ii
         if (ii < 1) {

@@ -1,6 +1,6 @@
 const path = require("path")
 const fs = require("fs")
-const ps = require('ps-node')
+const {exec} = require('child_process')
 
 class HelperClass {
     rootDir = path.join(__dirname, '../')
@@ -78,14 +78,14 @@ class HelperClass {
         config.pid = null;
         await this.setSetting(config)
 
-        ps.kill( pid, function(err) {
+        exec(`kill -9 ${pid}`, (err, stdout, stderr) => {
             if (err) {
-                throw new Error( err );
+                throw err
             }
-            else {
-                console.log( 'Process %s has been killed!', pid );
-            }
-        });
+
+            console.log('stdout', stdout)
+            console.log('stderr', err)
+        })
     }
 
     //Очищает результаты

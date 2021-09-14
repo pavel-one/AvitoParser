@@ -17,7 +17,6 @@
     "ghost-cursor": "^1.1.6",
     "lodash": "^4.17.21",
     "nodemon": "^2.0.12",
-    "ps-node": "^0.1.6",
     "pug": "^3.0.2",
     "puppeteer": "^10.2.0",
     "puppeteer-autoscroll-down": "^0.1.7",

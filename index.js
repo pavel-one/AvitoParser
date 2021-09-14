@@ -138,7 +138,11 @@ app.get('/stop/:id', async (request, response) => {
     const id = request.params.id
     const setting = await helper.getSetting(id)
 
-    await helper.closeProcess(setting)
+    try {
+        await helper.closeProcess(setting)
+    } catch (e) {
+        console.log('!! ERR CLOSE PROCESS !!', e.message)
+    }
 
     response.redirect('back')
 })

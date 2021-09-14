@@ -12,42 +12,54 @@ const {createWorker} = require("tesseract.js");
     const id = Number(process.argv[2])
     const config = await helper.getSetting(id)
 
-    for (const page of config.pages) {
-        let parser
-        process.send(`Стартую парсинг id = ${id} page = ${page}`)
-
-        //Пробуем сбилдить парсер
-        try {
-            parser = await ParserClass.build(page, config, tesseract)
-        } catch (e) {
-            console.log('!! BUILD ERROR !!', e)
-            continue
-        }
-
-        //Пробуем инициализировать страницу
-        try {
-            await parser.init()
-        } catch (e) {
-            await parser.close()
-            console.log('!! INIT ERROR !!', e)
-            continue
-        }
-
-        //Запускаем парсер, если билд ОК
-        try {
-            await parser.process()
-        } catch (e) {
-            console.log("!! PARSER ERROR !!", e.message)
-            await parser.close()
-            continue
-        }
-
-        //Страница отработала
-        await helper.removePage(config, page)
-        await parser.close()
-    }
+    await startProcess(config, tesseract)
 
     //Все страницы прошли, закрываем процесс, убиваем зависимости
     await tesseract.terminate()
     process.exit()
+
+    async function startProcess(config, tesseract) {
+        for (const page of config.pages) {
+            let parser
+            process.send(`Стартую парсинг id = ${id} page = ${page}`)
+
+            //Пробуем сбилдить парсер
+            try {
+                parser = await ParserClass.build(page, config, tesseract)
+            } catch (e) {
+                console.log('!! BUILD ERROR !!', e)
+                continue
+            }
+
+            //Пробуем инициализировать страницу
+            try {
+                await parser.init()
+            } catch (e) {
+                await parser.close()
+                console.log('!! INIT ERROR !!', e)
+                continue
+            }
+
+            //Запускаем парсер, если билд ОК
+            try {
+                await parser.process()
+            } catch (e) {
+                console.log("!! PARSER ERROR !!", e.message)
+                await parser.close()
+                continue
+            }
+
+            //Страница отработала
+            await helper.removePage(config, page)
+            await parser.close()
+        }
+
+        //Если остались необработнные страницы - перезапускаемся
+        config = await helper.getSetting(config.id)
+        if (!config.pages.length === 0) {
+            return true;
+        }
+
+        await startProcess(config, tesseract)
+    }
 })()

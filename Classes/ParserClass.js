@@ -63,19 +63,24 @@ class ParserClass {
         parser.result = []
 
 
-        parser.browser = await puppeteer.launch({
-            headless: true,
-            args: [
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--proxy-server=" + parser.proxy.host,
-                '--disable-dev-shm-usage'
-            ],
-            defaultViewport: {
-                width: 1366,
-                height: 768
-            }
-        })
+        try {
+            parser.browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--proxy-server=" + parser.proxy.host,
+                    '--disable-dev-shm-usage'
+                ],
+                defaultViewport: {
+                    width: 1366,
+                    height: 768
+                }
+            })
+        } catch (e) {
+            await parser.browser.close()
+            throw new Error('Умер броузер!')
+        }
 
         return parser
     }
